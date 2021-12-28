@@ -1,0 +1,21 @@
+<html>
+    <head>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+        <script src="https://www.youtube.com/iframe_api"></script>
+        <script src="ytsb.js"></script>
+        <link rel="stylesheet" href="styles.css">
+    </head>
+    <body>
+        <h1>YouTube Soundboard</h1>
+        <div>
+            <div class="setup">
+                <label for="numberOfVideos">Number of videos:</label>
+                <span id="numberOfVideosValue"></span>
+                <input type="range" id="numberOfVideos" name="numberOfVideos" min="1" max="10" value="1"></input>
+                <button id="generatePlayers">Build</button>
+                <div id="error"></div>
+            </div>
+            <div id="players"></div>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,22 @@
+iframe {
+  display: none;
+}
+
+#error {
+  color: red;
+  margin-left: 10px;
+}
+
+.setup {
+  display: flex;
+  align-items: center;
+}
+
+.players {
+  display: flex;
+  flex-direction: column;
+}
+
+.player-wrapper {
+  padding: 10px;
+}
