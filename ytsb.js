@@ -61,7 +61,7 @@ function onYouTubeIframeAPIReady() {
             break;
           case "play": {
             const player = playersMap[i];
-            if (Number.isInteger(settings.start)) {
+            if (Number.isInteger(parseInt(settings.start))) {
               player.seekTo(settings.start);
             }
             player.playVideo();
