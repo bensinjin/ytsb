@@ -1,3 +1,10 @@
+// Add iframe API library, see https://developers.google.com/youtube/iframe_api_reference.
+let tag = document.createElement("script");
+tag.src = "https://www.youtube.com/iframe_api";
+let firstScriptTag = document.getElementsByTagName("script")[0];
+firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+// To store our players.
 let playersMap = {};
 function onYouTubeIframeAPIReady() {
   // Add numberOfVideosValue.
@@ -15,6 +22,7 @@ function onYouTubeIframeAPIReady() {
     for (let i = 0; i < numberOfVideos; i++) {
       const buildButtonId = `buildButton${i}`;
       const playerContainerId = `player${i}`;
+      const volumeSliderId = `volumeSlider${i}`;
       players.append(`
         <div class="player-wrapper">
           <label>${i + 1}.</label>
@@ -22,7 +30,8 @@ function onYouTubeIframeAPIReady() {
           <input name="buttonLabel" data-build-button="${buildButtonId}" maxlength="20" size="20" placeholder="Button label">
           <input name="start" data-build-button="${buildButtonId}" maxlength="10" size="10" placeholder="Start from sec.">
           <button id=${buildButtonId} data-player-container-id="${playerContainerId}" data-state="build">Build</button>
-          <div class="player-container" id="${playerContainerId}"></div>
+          <input id=${volumeSliderId} type="range" name="volume" min="0" max="100" value="1"></input>
+          <div id="${playerContainerId}" class="player-container"></div>
         </div>
       `);
       // Add click handler for player build buttons.
