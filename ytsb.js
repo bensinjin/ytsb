@@ -46,7 +46,7 @@ function buildVideoItem(container, videoItemID) {
   container.append(`
     <div class="video-item">
       <div class="configuration">
-        <input id="videoId${videoItemID}" maxlength="15" size="15" placeholder="YoutTube video id" value="_4OfDN6X9oc">
+        <input id="videoId${videoItemID}" maxlength="15" size="15" placeholder="YoutTube video id">
         <input id="buttonLabel${videoItemID}" maxlength="20" size="20" placeholder="Button label">
         <button id="loadButton${videoItemID}" data-controls-container-id="controls${videoItemID}" data-player-container-id="player${videoItemID}">
           Load
