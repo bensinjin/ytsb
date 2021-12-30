@@ -44,25 +44,29 @@ function addBuildButtonOnClick() {
  */
 function buildVideoItem(container, videoItemID) {
   container.append(`
-    <div class="video-item">
-      <div class="configuration">
-        <input id="videoId${videoItemID}" maxlength="15" size="15" placeholder="YoutTube video id">
-        <input id="buttonLabel${videoItemID}" maxlength="20" size="20" placeholder="Button label">
-        <button id="loadButton${videoItemID}" data-controls-container-id="controls${videoItemID}" data-player-container-id="player${videoItemID}">
-          Load
-        </button>
+    <div class="col-md-4 mt-2">
+      <div class="configuration mb-1">
+        <div class="form-control">
+          <input id="videoId${videoItemID}" class="form-control mb-1" maxlength="15" placeholder="YouTube video id">
+          <input id="buttonLabel${videoItemID}" class="form-control mb-1" maxlength="20" placeholder="Button label">
+          <button id="loadButton${videoItemID}" class="btn btn-primary" data-controls-container-id="controls${videoItemID}" data-player-container-id="player${videoItemID}">
+            Load
+          </button>
+        </div>
       </div>
-      <div class="controls" id="controls${videoItemID}"></div>
-      <div class="player" id="player${videoItemID}" style="display: none;"></div>
+      <div class="controls mb-1" id="controls${videoItemID}"></div>
+      <div class="player collapse" id="player${videoItemID}"></div>
     </div>
   `);
 }
 
 /**
- *
+ * Add video configuration event handlers.
  */
 function addVideoItemConfigurationHandlers(videoItemID) {
-  $(`#loadButton${videoItemID}`).on("click", function () {
+  const loadButton = $(`#loadButton${videoItemID}`);
+  // Add load button on click.
+  loadButton.on("click", function () {
     const button = $(this);
     const containerId = button.attr("data-player-container-id");
     const videoId = $(`#videoId${videoItemID}`).val();
@@ -77,6 +81,7 @@ function addVideoItemConfigurationHandlers(videoItemID) {
       events: {
         onReady: onPlayerReady,
         onStateChange: onPlayerStateChange,
+        onError: onPlayerError,
       },
     });
   });
@@ -87,11 +92,39 @@ function addVideoItemConfigurationHandlers(videoItemID) {
  */
 function onPlayerReady(event) {
   const player = event.target;
-  // Add controls.
   const videoItemID = getVideoItemIDByPlayerID(player.id);
+  // Add controls.
   const controlsContainer = $(`#controls${videoItemID}`);
+  // Clear controls. (this is necessary if there was an error)
+  controlsContainer.empty();
   buildVideoItemControls(controlsContainer, videoItemID);
   addVideoItemControlsHandlers(videoItemID);
+}
+
+/**
+ * Called when the player's state changes.
+ */
+function onPlayerStateChange(event) {
+  const player = event.target;
+  const videoItemID = getVideoItemIDByPlayerID(player.id);
+  const playerState = player.getPlayerState();
+  const playButton = $(`#playButton${videoItemID}`);
+  if (playerState === YT.PlayerState.ENDED) {
+    playButton.removeAttr("disabled");
+  }
+}
+
+/**
+ * Called when there's an error with the player.
+ */
+function onPlayerError(event) {
+  const player = event.target;
+  const videoItemID = getVideoItemIDByPlayerID(player.id);
+  console.error(
+    "An error occured. The video will be removed. Please re-add a valid video id."
+  );
+  delete playersMap[videoItemID];
+  player.destroy();
 }
 
 /**
@@ -114,14 +147,24 @@ function buildVideoItemControls(container, videoItemID) {
     ? ` ${$(`#buttonLabel${videoItemID}`).val()}`
     : "";
   container.append(`
-    <button id="playButton${videoItemID}">Play${label}</button>
-    <button id="pauseButton${videoItemID}">Pause${label}</button>
-    <button id="muteButton${videoItemID}">Mute${label}</button>
-    <label>Start from:</label>
-    <input id="start${videoItemID}" maxlength="10" size="10">
-    <label>Volume:</label>
-    <input id="volumeSlider${videoItemID}" type="range" min="0" max="100" value="100"></input>
-    <button id="showHidePlayerButton${videoItemID}">Show video</button>
+    <div class="form-control">
+      <div class="form-control mb-1">
+        <button id="playButton${videoItemID}" class="btn btn-success">Play${label}</button>
+        <button id="pauseButton${videoItemID}" class="btn btn-danger">Pause${label}</button>
+        <button id="muteButton${videoItemID}" class="btn btn-warning">Mute${label}</button>
+      </div>
+      <div class="form-control mb-1">
+        <label>Start from second:</label>
+        <input id="start${videoItemID}" class="form-control" maxlength="10" size="10">
+      </div>
+      <div class="form-control mb-1">
+        <label>Volume:</label>
+        <input id="volumeSlider${videoItemID}" class="form-control" type="range" min="0" max="100" value="100"></input>
+      </div>
+      <button id="showHidePlayerButton${videoItemID}" type="button" class="btn btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#player${videoItemID}">
+        Show video
+      </button>
+    </div>
   `);
 }
 
@@ -133,7 +176,6 @@ function addVideoItemControlsHandlers(videoItemID) {
   const pauseButton = $(`#pauseButton${videoItemID}`);
   const muteButton = $(`#muteButton${videoItemID}`);
   const volume = $(`#volumeSlider${videoItemID}`);
-  const showHidePlayerButton = $(`#showHidePlayerButton${videoItemID}`);
   const player = playersMap[videoItemID];
   const playerState = player.getPlayerState();
   // Play button on click.
@@ -172,28 +214,4 @@ function addVideoItemControlsHandlers(videoItemID) {
   volume.on("change", function () {
     player.setVolume(volume.val());
   });
-  // Show/hide video on click.
-  showHidePlayerButton.on("click", function () {
-    const playerContainer = $(`#player${videoItemID}`);
-    if (playerContainer.is(":hidden")) {
-      playerContainer.show();
-      showHidePlayerButton.text("Hide video");
-    } else {
-      playerContainer.hide();
-      showHidePlayerButton.text("Show video");
-    }
-  });
-}
-
-/**
- * Called when the player's state changes.
- */
-function onPlayerStateChange(event) {
-  const player = event.target;
-  const videoItemID = getVideoItemIDByPlayerID(player.id);
-  const playerState = player.getPlayerState();
-  const playButton = $(`#playButton${videoItemID}`);
-  if (playerState === YT.PlayerState.ENDED) {
-    playButton.removeAttr("disabled");
-  }
 }

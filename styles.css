@@ -1,39 +1,7 @@
-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+h1 {
+  text-align: center;
 }
 
 iframe {
-  max-width: 100%;
-}
-
-.setup {
-  margin-bottom: 15px;
-}
-
-.players {
-  display: flex;
-  flex-direction: column;
-}
-
-#videoItems {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.video-item {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: 10px 10px 5px;
-}
-
-.configuration,
-.controls {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  flex-wrap: wrap;
+  max-width: 98%;
 }
