@@ -52,8 +52,8 @@ function buildVideoItem(container, videoItemID) {
           Load
         </button>
       </div>
-      <div id="controls${videoItemID}"></div>
-      <div id="player${videoItemID}" style="display: none;"></div>
+      <div class="controls" id="controls${videoItemID}"></div>
+      <div class="player" id="player${videoItemID}" style="display: none;"></div>
     </div>
   `);
 }
@@ -71,8 +71,7 @@ function addVideoItemConfigurationHandlers(videoItemID) {
       videoId,
       playerVars: {
         playsInline: 1,
-        // controls: 0,
-        // mute: 1,
+        controls: 0,
         rel: 0,
       },
       events: {
@@ -84,7 +83,7 @@ function addVideoItemConfigurationHandlers(videoItemID) {
 }
 
 /**
- *
+ * Called when an individual player is ready.
  */
 function onPlayerReady(event) {
   const player = event.target;
@@ -127,7 +126,7 @@ function buildVideoItemControls(container, videoItemID) {
 }
 
 /**
- *
+ * Add video control event handlers.
  */
 function addVideoItemControlsHandlers(videoItemID) {
   const playButton = $(`#playButton${videoItemID}`);
@@ -166,7 +165,7 @@ function addVideoItemControlsHandlers(videoItemID) {
     } else {
       player.mute();
       volume.val(0);
-      muteButton.text("Un-mute");
+      muteButton.html("<del>Mute</del>");
     }
   });
   // Volume on change.
@@ -187,14 +186,13 @@ function addVideoItemControlsHandlers(videoItemID) {
 }
 
 /**
- *
+ * Called when the player's state changes.
  */
 function onPlayerStateChange(event) {
   const player = event.target;
   const videoItemID = getVideoItemIDByPlayerID(player.id);
   const playerState = player.getPlayerState();
   const playButton = $(`#playButton${videoItemID}`);
-  console.log(playerState);
   if (playerState === YT.PlayerState.ENDED) {
     playButton.removeAttr("disabled");
   }
