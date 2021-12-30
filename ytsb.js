@@ -49,7 +49,7 @@ function buildVideoItem(container, videoItemID) {
         <div class="form-control">
           <input id="videoId${videoItemID}" class="form-control mb-1" maxlength="15" placeholder="YouTube video id">
           <input id="buttonLabel${videoItemID}" class="form-control mb-1" maxlength="20" placeholder="Button label">
-          <button id="loadButton${videoItemID}" class="btn btn-primary" data-controls-container-id="controls${videoItemID}" data-player-container-id="player${videoItemID}">
+          <button id="loadButton${videoItemID}" class="btn btn-primary" disabled data-controls-container-id="controls${videoItemID}" data-player-container-id="player${videoItemID}">
             Load
           </button>
         </div>
@@ -64,7 +64,18 @@ function buildVideoItem(container, videoItemID) {
  * Add video configuration event handlers.
  */
 function addVideoItemConfigurationHandlers(videoItemID) {
+  const videoIDInput = $(`#videoId${videoItemID}`);
   const loadButton = $(`#loadButton${videoItemID}`);
+  // Add video id on input.
+  videoIDInput.on("input", function () {
+    const val = videoIDInput.val();
+    // Poor man's validation. Something official would be nice.
+    if (val.trim().length > 0) {
+      loadButton.removeAttr("disabled");
+    } else {
+      loadButton.attr("disabled", "disabled");
+    }
+  });
   // Add load button on click.
   loadButton.on("click", function () {
     const button = $(this);
@@ -120,11 +131,15 @@ function onPlayerStateChange(event) {
 function onPlayerError(event) {
   const player = event.target;
   const videoItemID = getVideoItemIDByPlayerID(player.id);
-  console.error(
-    "An error occured. The video will be removed. Please re-add a valid video id."
-  );
+  const playButton = $(`#playButton${videoItemID}`);
+  const pauseButton = $(`#pauseButton${videoItemID}`);
   delete playersMap[videoItemID];
   player.destroy();
+  playButton.removeAttr("disabled");
+  pauseButton.removeAttr("disabled");
+  console.error(
+    "An error occured. The video has been removed. Please re-add a valid video id."
+  );
 }
 
 /**
@@ -148,7 +163,7 @@ function buildVideoItemControls(container, videoItemID) {
     : "";
   container.append(`
     <div class="form-control">
-      <div class="form-control mb-1">
+      <div class="control-buttons form-control mb-1">
         <button id="playButton${videoItemID}" class="btn btn-success">Play${label}</button>
         <button id="pauseButton${videoItemID}" class="btn btn-danger">Pause${label}</button>
         <button id="muteButton${videoItemID}" class="btn btn-warning">Mute${label}</button>

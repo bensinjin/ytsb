@@ -5,3 +5,10 @@ h1 {
 iframe {
   max-width: 98%;
 }
+
+.control-buttons {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 3px;
+}
