@@ -6,99 +6,196 @@ firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
 // To store our players.
 let playersMap = {};
+// Entry point.
 function onYouTubeIframeAPIReady() {
-  // Add numberOfVideosValue.
-  $("#numberOfVideosValue").text($("#numberOfVideos").val());
-  $("#numberOfVideos").on("change", function (e) {
+  addNumberOfVideosValue();
+  addBuildButtonOnClick();
+}
+
+/**
+ * Add number of videos value taken from the number of videos slider.
+ */
+function addNumberOfVideosValue() {
+  $("#numberOfVideosValue").text($("#numberOfVideosSlider").val());
+  $("#numberOfVideosSlider").on("change", function (e) {
     $("#numberOfVideosValue").text(e.target.value);
   });
-  // Add click handler to generate players.
-  $("#generatePlayers").on("click", function () {
-    const players = $("#players");
-    const numberOfVideos = $("#numberOfVideos").val();
-    // Clear players.
-    players.empty();
-    // Create a create player form per video.
-    for (let i = 0; i < numberOfVideos; i++) {
-      const buildButtonId = `buildButton${i}`;
-      const playerContainerId = `player${i}`;
-      const volumeSliderId = `volumeSlider${i}`;
-      players.append(`
-        <div class="player-wrapper">
-          <label>${i + 1}.</label>
-          <input name="videoId" data-build-button="${buildButtonId}" maxlength="15" size="15" placeholder="YoutTube video id">
-          <input name="buttonLabel" data-build-button="${buildButtonId}" maxlength="20" size="20" placeholder="Button label">
-          <input name="start" data-build-button="${buildButtonId}" maxlength="10" size="10" placeholder="Start from sec.">
-          <button id=${buildButtonId} data-player-container-id="${playerContainerId}" data-state="build">Build</button>
-          <input id=${volumeSliderId} type="range" name="volume" min="0" max="100" value="1"></input>
-          <div id="${playerContainerId}" class="player-container"></div>
-        </div>
-      `);
-      // Add click handler for player build buttons.
-      $(`#${buildButtonId}`).on("click", function (e) {
-        let btn = $(this);
-        // Build settings.
-        let settings = {
-          playerContainerId: btn.attr("data-player-container-id"),
-        };
-        $(`input[data-build-button="${buildButtonId}"]`).each(function () {
-          settings[$(this).attr("name")] = $(this).val();
-        });
-        // Return early if we don't have a video id.
-        if (!settings.videoId) {
-          $("#error").text("You must provide a video id!");
-          return setTimeout(function () {
-            $("#error").empty();
-          }, 2000);
-        }
-        const buttonState = btn.attr("data-state");
-        switch (buttonState) {
-          case "build":
-            // Build player and add it to the map.
-            playersMap[i] = new YT.Player(settings.playerContainerId, {
-              videoId: settings.videoId,
-              playerVars: {
-                start: settings.start,
-              },
-            });
-            // Set state.
-            btn.attr("data-state", "play");
-            // Set label.
-            btn.text(
-              `Play${settings.buttonLabel ? ` ${settings.buttonLabel}` : ""}`
-            );
-            break;
-          case "play": {
-            const player = playersMap[i];
-            if (Number.isInteger(parseInt(settings.start))) {
-              player.seekTo(settings.start);
-            }
-            player.playVideo();
-            // Set state.
-            btn.attr("data-state", "stop");
-            // Set label.
-            btn.text(
-              `Stop${settings.buttonLabel ? ` ${settings.buttonLabel}` : ""}`
-            );
-            break;
-          }
-          case "stop": {
-            const player = playersMap[i];
-            const state = player.getPlayerState();
-            if (state === YT.PlayerState.PLAYING) {
-              // TODO: investigate, currently we need to pause or seekTo is not respected.
-              player.pauseVideo();
-            }
-            // Set state.
-            btn.attr("data-state", "play");
-            // Set label.
-            btn.text(
-              `Play${settings.buttonLabel ? ` ${settings.buttonLabel}` : ""}`
-            );
-            break;
-          }
-        }
-      });
+}
+
+/**
+ * Add the build button click handler.
+ */
+function addBuildButtonOnClick() {
+  $("#buildButton").on("click", function () {
+    const videoItemsContainer = $("#videoItems");
+    const numberOfVideoItems = $("#numberOfVideosSlider").val();
+    // Clear video items.
+    videoItemsContainer.empty();
+    // Build video items.
+    for (let videoItemID = 0; videoItemID < numberOfVideoItems; videoItemID++) {
+      buildVideoItem(videoItemsContainer, videoItemID);
+      addVideoItemConfigurationHandlers(videoItemID);
     }
   });
+}
+
+/**
+ *  Build a video item.
+ */
+function buildVideoItem(container, videoItemID) {
+  container.append(`
+    <div class="video-item">
+      <div class="configuration">
+        <input id="videoId${videoItemID}" maxlength="15" size="15" placeholder="YoutTube video id" value="_4OfDN6X9oc">
+        <input id="buttonLabel${videoItemID}" maxlength="20" size="20" placeholder="Button label">
+        <button id="loadButton${videoItemID}" data-controls-container-id="controls${videoItemID}" data-player-container-id="player${videoItemID}">
+          Load
+        </button>
+      </div>
+      <div id="controls${videoItemID}"></div>
+      <div id="player${videoItemID}" style="display: none;"></div>
+    </div>
+  `);
+}
+
+/**
+ *
+ */
+function addVideoItemConfigurationHandlers(videoItemID) {
+  $(`#loadButton${videoItemID}`).on("click", function () {
+    const button = $(this);
+    const containerId = button.attr("data-player-container-id");
+    const videoId = $(`#videoId${videoItemID}`).val();
+    // Add player to players map. When the player is ready we'll add the controls, see onPlayerReady().
+    playersMap[videoItemID] = new YT.Player(containerId, {
+      videoId,
+      playerVars: {
+        playsInline: 1,
+        // controls: 0,
+        // mute: 1,
+        rel: 0,
+      },
+      events: {
+        onReady: onPlayerReady,
+        onStateChange: onPlayerStateChange,
+      },
+    });
+  });
+}
+
+/**
+ *
+ */
+function onPlayerReady(event) {
+  const player = event.target;
+  // Add controls.
+  const videoItemID = getVideoItemIDByPlayerID(player.id);
+  const controlsContainer = $(`#controls${videoItemID}`);
+  buildVideoItemControls(controlsContainer, videoItemID);
+  addVideoItemControlsHandlers(videoItemID);
+}
+
+/**
+ * Helper, given a playerID retrieve the associated videoItemID from the playersMap.
+ */
+function getVideoItemIDByPlayerID(playerID) {
+  for (const [key, value] of Object.entries(playersMap)) {
+    if (value.id === playerID) {
+      return key;
+    }
+  }
+  return null;
+}
+
+/**
+ * Build video item controls.
+ */
+function buildVideoItemControls(container, videoItemID) {
+  const label = $(`#buttonLabel${videoItemID}`).val()
+    ? ` ${$(`#buttonLabel${videoItemID}`).val()}`
+    : "";
+  container.append(`
+    <button id="playButton${videoItemID}">Play${label}</button>
+    <button id="pauseButton${videoItemID}">Pause${label}</button>
+    <button id="muteButton${videoItemID}">Mute${label}</button>
+    <label>Start from:</label>
+    <input id="start${videoItemID}" maxlength="10" size="10">
+    <label>Volume:</label>
+    <input id="volumeSlider${videoItemID}" type="range" min="0" max="100" value="100"></input>
+    <button id="showHidePlayerButton${videoItemID}">Show${label} video</button>
+  `);
+}
+
+/**
+ *
+ */
+function addVideoItemControlsHandlers(videoItemID) {
+  const playButton = $(`#playButton${videoItemID}`);
+  const pauseButton = $(`#pauseButton${videoItemID}`);
+  const muteButton = $(`#muteButton${videoItemID}`);
+  const volume = $(`#volumeSlider${videoItemID}`);
+  const showHidePlayerButton = $(`#showHidePlayerButton${videoItemID}`);
+  const player = playersMap[videoItemID];
+  const playerState = player.getPlayerState();
+  // Play button on click.
+  playButton.on("click", function () {
+    if (playerState !== YT.PlayerState.PLAYING) {
+      const start = $(`#start${videoItemID}`).val();
+      if (Number.isInteger(parseInt(start))) {
+        player.seekTo(start);
+      }
+      player.playVideo();
+      playButton.attr("disabled", "disabled");
+      pauseButton.removeAttr("disabled");
+    }
+  });
+  // Pause button on click.
+  pauseButton.on("click", function () {
+    if (playerState !== YT.PlayerState.PAUSED) {
+      player.pauseVideo();
+      pauseButton.attr("disabled", "disabled");
+      playButton.removeAttr("disabled");
+    }
+  });
+  // Mute button on click.
+  muteButton.on("click", function () {
+    if (player.isMuted()) {
+      player.unMute();
+      volume.val(player.getVolume());
+      muteButton.text("Mute");
+    } else {
+      player.mute();
+      volume.val(0);
+      muteButton.text("Un-mute");
+    }
+  });
+  // Volume on change.
+  volume.on("change", function () {
+    player.setVolume(volume.val());
+  });
+  // Show/hide video on click.
+  showHidePlayerButton.on("click", function () {
+    const playerContainer = $(`#player${videoItemID}`);
+    if (playerContainer.is(":hidden")) {
+      playerContainer.show();
+      showHidePlayerButton.text("Hide video");
+    } else {
+      playerContainer.hide();
+      showHidePlayerButton.text("Show video");
+    }
+  });
+}
+
+/**
+ *
+ */
+function onPlayerStateChange(event) {
+  const player = event.target;
+  const videoItemID = getVideoItemIDByPlayerID(player.id);
+  const playerState = player.getPlayerState();
+  const playButton = $(`#playButton${videoItemID}`);
+  console.log(playerState);
+  if (playerState === YT.PlayerState.ENDED) {
+    playButton.removeAttr("disabled");
+  }
 }
