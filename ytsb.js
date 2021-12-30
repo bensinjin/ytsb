@@ -121,7 +121,7 @@ function buildVideoItemControls(container, videoItemID) {
     <input id="start${videoItemID}" maxlength="10" size="10">
     <label>Volume:</label>
     <input id="volumeSlider${videoItemID}" type="range" min="0" max="100" value="100"></input>
-    <button id="showHidePlayerButton${videoItemID}">Show${label} video</button>
+    <button id="showHidePlayerButton${videoItemID}">Show video</button>
   `);
 }
 
